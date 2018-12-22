@@ -16,27 +16,32 @@ public class Main {
         System.setProperty("hadoop.home.dir", "C:/Hadoop");
 
         // logging
-        Logger.getLogger("org.apache").setLevel(Level.INFO);
+        Logger.getLogger("org.apache").setLevel(Level.WARN);
 
-        List<Double> inputData = new ArrayList<Double>();
-        inputData.add(35.5);
-        inputData.add(12.49943);
-        inputData.add(90.32);
-        inputData.add(20.32);
+        List<Integer> inputData = new ArrayList<Integer>();
+        inputData.add(35);
+        inputData.add(12);
+        inputData.add(90);
+        inputData.add(20);
 
         // local[*] - using all cores
         SparkConf conf = new SparkConf().setAppName("sparkApplication").setMaster("local[*]");
         JavaSparkContext sc = new JavaSparkContext(conf);
 
         // load in a collection and turn it into a RDD
-        JavaRDD<Double> javaRDD = sc.parallelize(inputData);
+        JavaRDD<Integer> javaRDD = sc.parallelize(inputData);
 
-        // reduce operation
-        double result = javaRDD.reduce((value1, value2) -> {
-           return value1 + value2;
-        });
+        // map operation
+        JavaRDD<Double> sqrtRDD = javaRDD.map(value -> Math.sqrt(value));
+        // sqrtRDD.foreach(value -> System.out.println(value)); // println is not serializable
+        sqrtRDD.collect().forEach(System.out::println);
 
-        System.out.println(result);
+        // count the elements
+        System.out.println(sqrtRDD.count());
+        // using just map & reduce
+        JavaRDD<Long> singleLongRDD = sqrtRDD.map(value -> 1L);
+        Long count = singleLongRDD.reduce((value1, value2) -> value1 + value2);
+        System.out.println(count);
 
         sc.close();
     }
