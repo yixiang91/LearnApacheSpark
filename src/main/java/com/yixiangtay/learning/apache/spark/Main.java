@@ -11,13 +11,12 @@ import org.apache.spark.api.java.JavaSparkContext;
 public class Main {
 
     public static void main(String[] args) {
-
         // winutils
         // download from https://github.com/s911415/apache-hadoop-3.1.0-winutils
         System.setProperty("hadoop.home.dir", "C:/Hadoop");
 
         // logging
-        Logger.getLogger("org.apache").setLevel(Level.WARN);
+        Logger.getLogger("org.apache").setLevel(Level.INFO);
 
         List<Double> inputData = new ArrayList<Double>();
         inputData.add(35.5);
@@ -31,6 +30,13 @@ public class Main {
 
         // load in a collection and turn it into a RDD
         JavaRDD<Double> javaRDD = sc.parallelize(inputData);
+
+        // reduce operation
+        double result = javaRDD.reduce((value1, value2) -> {
+           return value1 + value2;
+        });
+
+        System.out.println(result);
 
         sc.close();
     }
