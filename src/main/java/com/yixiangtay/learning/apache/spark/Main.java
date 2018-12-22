@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import scala.Tuple2;
 
 public class Main {
 
@@ -30,18 +31,13 @@ public class Main {
 
         // load in a collection and turn it into a RDD
         JavaRDD<Integer> javaRDD = sc.parallelize(inputData);
-
         // map operation
-        JavaRDD<Double> sqrtRDD = javaRDD.map(value -> Math.sqrt(value));
-        // sqrtRDD.foreach(value -> System.out.println(value)); // println is not serializable
-        sqrtRDD.collect().forEach(System.out::println);
+        // using Java class
+        // JavaRDD<IntegerWithSquareRoot> sqrtRDD = javaRDD.map(value -> new IntegerWithSquareRoot(value));
+        // using Scala tuple
+        JavaRDD<Tuple2<Integer, Double>> sqrtRDD = javaRDD.map(value -> new Tuple2<>(value, Math.sqrt(value)));
 
-        // count the elements
-        System.out.println(sqrtRDD.count());
-        // using just map & reduce
-        JavaRDD<Long> singleLongRDD = sqrtRDD.map(value -> 1L);
-        Long count = singleLongRDD.reduce((value1, value2) -> value1 + value2);
-        System.out.println(count);
+        Tuple2<Integer, Double> scalaTuple = new Tuple2<>(9, 3.0);
 
         sc.close();
     }
