@@ -26,7 +26,7 @@ public class Main {
         JavaSparkContext sc = new JavaSparkContext(conf);
 
         // read from disk
-        JavaRDD<String> initialRDD = sc.textFile("src/main/resources/subtitles/input-spring.txt");
+        JavaRDD<String> initialRDD = sc.textFile("src/main/resources/subtitles/input.txt");
 
         // keyword ranking
         JavaRDD<String> lettersOnlyRDD = initialRDD.map(sentence -> sentence.replaceAll("[^a-zA-Z\\s]", "").toLowerCase());
@@ -39,8 +39,19 @@ public class Main {
         JavaPairRDD<Long, String> switched = totals.mapToPair(tuple -> new Tuple2<Long, String> (tuple._2, tuple._1));
         JavaPairRDD<Long, String> sorted = switched.sortByKey(false);
 
+        // System.out.println("There are a total of: " + sorted.getNumPartitions() + " partitions");
+        // sorted.collect().forEach(System.out::println);
+
         List<Tuple2<Long, String>> results = sorted.take(10);
         results.forEach(System.out::println);
+
+        // coalesce() - for reducing the no. of partitions needed just to give the right answer
+        // say for e.g. after performing many transformations on multi-terabyte, multi-partition RDD, we're left with a small amount of data
+        // for remaining transformations, any shuffle will be pointlessly expensive when done across many partitions
+
+        // collect() - for gathering a small RDD into the driver node (usually for printing)
+        // only use it if you're sure the RDD will fit into a single JVM's RAM
+        // if the results are big, we'd write to a (e.g. HDFS) file
 
         sc.close();
     }
