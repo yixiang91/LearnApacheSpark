@@ -55,8 +55,8 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.1.1</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <!--<source>${java.version}</source>-->
+                    <!--<target>${java.version}</target>-->
                     <archive>
                         <manifest>
                             <mainClass>${groupId}.apache.spark.Main</mainClass>
