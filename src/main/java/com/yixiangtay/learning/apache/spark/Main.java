@@ -10,6 +10,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
+import java.util.Scanner;
 
 public class Main {
 
@@ -29,6 +30,7 @@ public class Main {
         JavaRDD<String> initialRDD = sc.textFile("src/main/resources/subtitles/input.txt");
 
         // keyword ranking
+        // transformations
         JavaRDD<String> lettersOnlyRDD = initialRDD.map(sentence -> sentence.replaceAll("[^a-zA-Z\\s]", "").toLowerCase());
         JavaRDD<String> removedBlankLines = lettersOnlyRDD.filter(sentence -> sentence.trim().length() > 0);
         JavaRDD<String> justWords = removedBlankLines.flatMap(sentence -> Arrays.asList(sentence.split(" ")).iterator());
@@ -42,6 +44,7 @@ public class Main {
         // System.out.println("There are a total of: " + sorted.getNumPartitions() + " partitions");
         // sorted.collect().forEach(System.out::println);
 
+        // action
         List<Tuple2<Long, String>> results = sorted.take(10);
         results.forEach(System.out::println);
 
@@ -52,6 +55,17 @@ public class Main {
         // collect() - for gathering a small RDD into the driver node (usually for printing)
         // only use it if you're sure the RDD will fit into a single JVM's RAM
         // if the results are big, we'd write to a (e.g. HDFS) file
+
+        // hack to pause the program
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
+
+        // narrow transformation
+        // - spark does not need to move any data across partitions (e.g. mapToPair)
+
+        // wide transformation (shuffling)
+        // - spark needs to serialize the data for transferring across partitions / nodes (e.g. groupByKey)
+        // - expensive operation
 
         sc.close();
     }

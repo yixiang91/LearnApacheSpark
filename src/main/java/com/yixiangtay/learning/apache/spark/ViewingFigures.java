@@ -2,13 +2,12 @@ package com.yixiangtay.learning.apache.spark;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Scanner;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-
 import scala.Tuple2;
 
 /**
@@ -20,7 +19,7 @@ public class ViewingFigures
     @SuppressWarnings("resource")
     public static void main(String[] args)
     {
-        System.setProperty("hadoop.home.dir", "c:/hadoop");
+        System.setProperty("hadoop.home.dir", "C:/hadoop");
         Logger.getLogger("org.apache").setLevel(Level.WARN);
 
         SparkConf conf = new SparkConf().setAppName("startingSpark").setMaster("local[*]");
@@ -101,6 +100,8 @@ public class ViewingFigures
         JavaPairRDD<Long, String> step11 = step10.mapToPair(row -> new Tuple2<>(row._2._1, row._2._2));
         step11.sortByKey(false).collect().forEach(System.out::println);
 
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
         sc.close();
     }
 
@@ -149,7 +150,8 @@ public class ViewingFigures
                 .mapToPair(commaSeparatedLine -> {
                     String[] cols = commaSeparatedLine.split(",");
                     return new Tuple2<Integer, Integer>(new Integer(cols[0]), new Integer(cols[1]));
-                });
+                })
+                .cache();
     }
 
     private static JavaPairRDD<Integer, Integer> setUpViewDataRdd(JavaSparkContext sc, boolean testMode) {
