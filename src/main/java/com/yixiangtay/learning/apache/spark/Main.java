@@ -2,9 +2,11 @@ package com.yixiangtay.learning.apache.spark;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import static org.apache.spark.sql.functions.col;
 
 public class Main {
 
@@ -36,6 +38,35 @@ public class Main {
 
         long numberOfRows = dataset.count();
         System.out.println("There are " + numberOfRows + " records.");
+
+        Row firstRow = dataset.first();
+        // get() returns Object
+        String subjectUsingGet = firstRow.get(2).toString();
+        // getAs() returns String
+        String subjectUsingGetAs = firstRow.getAs("subject");
+        System.out.println("Subject using get(): " + subjectUsingGet);
+        System.out.println("Subject using getAs(): " + subjectUsingGetAs);
+        int year = Integer.parseInt(firstRow.getAs("year"));
+        System.out.println("Year: " + year);
+
+        // filter using expressions
+        Dataset<Row> modernArtResults = dataset.filter("subject = 'Modern Art' AND year >= 2007");
+        modernArtResults.show();
+
+        // filter using lambdas
+        Dataset<Row> modernArtResults2 = dataset.filter(
+                (FilterFunction<Row>) row ->
+                        row.getAs("subject").equals("Modern Art")
+                        && Integer.parseInt(row.getAs("year")) >= 2007);
+        modernArtResults2.show();
+
+        // filter using columns
+        Dataset<Row> modernArtResults3 =
+                dataset.filter(
+                        col("subject").equalTo("Modern Art")
+                        .and(col("year").geq(2007))
+        );
+        modernArtResults3.show();
 
         spark.close();
     }
