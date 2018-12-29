@@ -51,7 +51,15 @@ public class Main {
         };
         StructType schema = new StructType(fields);
         Dataset<Row> dataset =  spark.createDataFrame(inMemory, schema);
-        dataset.show();
+
+        dataset.createOrReplaceTempView("logging_view");
+        Dataset<Row> results = spark.sql(
+                "SELECT level, COLLECT_LIST(datetime) " +
+                        "FROM logging_view " +
+                        "GROUP BY level " +
+                        "ORDER BY level");
+
+        results.show();
 
         spark.close();
     }
