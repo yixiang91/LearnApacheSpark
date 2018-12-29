@@ -1,10 +1,17 @@
 package com.yixiangtay.learning.apache.spark;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 
 public class Main {
 
@@ -30,14 +37,21 @@ public class Main {
                         .config("spark.sql.warehouse.dir", "file:///C:/tmp/")
                         .getOrCreate();
 
-        // RDD is still being used in the underhood of the dataset
-        Dataset<Row> dataset = spark.read().option("header", true).csv("src/main/resources/exams/students.csv");
-        dataset.show(10);
+        // in-memory data
+        List<Row> inMemory = new ArrayList<>();
+        inMemory.add(RowFactory.create("WARN", "2016-12-31 04:19:32"));
+        inMemory.add(RowFactory.create("FATAL", "2016-12-31 03:22:34"));
+        inMemory.add(RowFactory.create("WARN", "2016-12-31 03:21:21"));
+        inMemory.add(RowFactory.create("INFO", "2015-4-21 14:32:21"));
+        inMemory.add(RowFactory.create("FATAL", "2015-4-21 19:23:20"));
 
-        // full sql syntax
-        dataset.createOrReplaceTempView("my_students_view");
-        Dataset<Row> results = spark.sql("SELECT distinct(year) FROM my_students_view WHERE subject='French' ORDER BY year DESC");
-        results.show();
+        StructField[] fields = new StructField[] {
+                new StructField("level", DataTypes.StringType, false, Metadata.empty()),
+                new StructField("datetime", DataTypes.StringType, false, Metadata.empty())
+        };
+        StructType schema = new StructType(fields);
+        Dataset<Row> dataset =  spark.createDataFrame(inMemory, schema);
+        dataset.show();
 
         spark.close();
     }
