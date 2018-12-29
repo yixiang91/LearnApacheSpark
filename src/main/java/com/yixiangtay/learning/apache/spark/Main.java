@@ -54,10 +54,8 @@ public class Main {
 
         dataset.createOrReplaceTempView("logging_view");
         Dataset<Row> results = spark.sql(
-                "SELECT level, COLLECT_LIST(datetime) " +
-                        "FROM logging_view " +
-                        "GROUP BY level " +
-                        "ORDER BY level");
+                "SELECT level, DATE_FORMAT(datetime, 'MMMM') AS month " +
+                        "FROM logging_view");
 
         results.show();
 
