@@ -1,17 +1,16 @@
 package com.yixiangtay.learning.apache.spark;
 
-import java.util.Arrays;
-import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataTypes;
 import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.date_format;
+import static org.apache.spark.sql.functions.max;
+import static org.apache.spark.sql.functions.min;
 
-public class Main {
+public class ExamResults {
 
     public static void main(String[] args) {
         // winutils
@@ -35,21 +34,13 @@ public class Main {
                         .config("spark.sql.warehouse.dir", "file:///C:/tmp/")
                         .getOrCreate();
 
-        Dataset<Row> dataset = spark.read().option("header", true).csv("src/main/resources/biglog.txt");
-
-        // pivot tables
-        Object[] months = new Object[] {
-                "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
-        };
-        List<Object> columns = Arrays.asList(months);
+        Dataset<Row> dataset = spark.read().option("header", true).csv("src/main/resources/exams/students.csv");
+        Column score = dataset.col("score");
 
         dataset
-                .select(col("level"),
-                        date_format(col("datetime"), "MMMM").alias("month"),
-                        date_format(col("datetime"), "M").alias("month_num").cast(DataTypes.IntegerType))
-                .groupBy("level")
-                .pivot("month", columns)
-                .count()
+                .groupBy("subject")
+                .agg(max(col("score")).alias("max_score"),
+                     min(col("score")).alias("min_score"))
                 .show();
 
         spark.close();
