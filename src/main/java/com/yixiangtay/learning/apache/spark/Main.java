@@ -1,5 +1,7 @@
 package com.yixiangtay.learning.apache.spark;
 
+import java.util.Arrays;
+import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.sql.Dataset;
@@ -34,23 +36,22 @@ public class Main {
                         .getOrCreate();
 
         Dataset<Row> dataset = spark.read().option("header", true).csv("src/main/resources/biglog.txt");
-        // dataset.createOrReplaceTempView("logging_view");
-        // Dataset<Row> results = spark.sql(
-        //         "SELECT level, DATE_FORMAT(datetime, 'MMMM') AS month, COUNT(1) as total " +
-        //                 "FROM logging_view " +
-        //                 "GROUP BY level, month " +
-        //                 "ORDER BY CAST(FIRST(DATE_FORMAT(datetime, 'M')) AS INT), level");
 
-        // dataframes api
+        // pivot tables
+        Object[] months = new Object[] {
+                "January", "February", "March", "April", "May", "June", "July", "August", "September", "Augcember", "October", "November", "December"
+        };
+        List<Object> columns = Arrays.asList(months);
+
         dataset
                 .select(col("level"),
                         date_format(col("datetime"), "MMMM").alias("month"),
                         date_format(col("datetime"), "M").alias("month_num").cast(DataTypes.IntegerType))
-                .groupBy(col("level"), col("month"), col("month_num"))
+                .groupBy("level")
+                .pivot("month", columns)
                 .count()
-                .orderBy(col("month_num"), col("level"))
-                .drop(col("month_num"))
-                .show(60);
+                .na().fill(0)
+                .show();
 
         spark.close();
     }
