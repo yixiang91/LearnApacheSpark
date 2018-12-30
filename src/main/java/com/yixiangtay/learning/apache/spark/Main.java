@@ -37,27 +37,18 @@ public class Main {
                         .config("spark.sql.warehouse.dir", "file:///C:/tmp/")
                         .getOrCreate();
 
-        // in-memory data
-        List<Row> inMemory = new ArrayList<>();
-        inMemory.add(RowFactory.create("WARN", "2016-12-31 04:19:32"));
-        inMemory.add(RowFactory.create("FATAL", "2016-12-31 03:22:34"));
-        inMemory.add(RowFactory.create("WARN", "2016-12-31 03:21:21"));
-        inMemory.add(RowFactory.create("INFO", "2015-4-21 14:32:21"));
-        inMemory.add(RowFactory.create("FATAL", "2015-4-21 19:23:20"));
-
-        StructField[] fields = new StructField[] {
-                new StructField("level", DataTypes.StringType, false, Metadata.empty()),
-                new StructField("datetime", DataTypes.StringType, false, Metadata.empty())
-        };
-        StructType schema = new StructType(fields);
-        Dataset<Row> dataset =  spark.createDataFrame(inMemory, schema);
-
+        // multiple groupings
+        Dataset<Row> dataset = spark.read().option("header", true).csv("src/main/resources/biglog.txt");
         dataset.createOrReplaceTempView("logging_view");
         Dataset<Row> results = spark.sql(
-                "SELECT level, DATE_FORMAT(datetime, 'MMMM') AS month " +
-                        "FROM logging_view");
+                "SELECT level, DATE_FORMAT(datetime, 'MMMM') AS month, COUNT(1) as total " +
+                        "FROM logging_view " +
+                        "GROUP BY level, month");
+        results.show(60);
 
-        results.show();
+        results.createOrReplaceTempView("results_view");
+        Dataset<Row> totals = spark.sql("SELECT SUM(total) FROM results_view");
+        totals.show();
 
         spark.close();
     }
