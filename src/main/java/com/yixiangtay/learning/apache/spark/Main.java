@@ -2,6 +2,8 @@ package com.yixiangtay.learning.apache.spark;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.sql.Dataset;
@@ -37,20 +39,29 @@ public class Main {
 
         Dataset<Row> dataset = spark.read().option("header", true).csv("src/main/resources/biglog.txt");
 
-        // pivot tables
-        Object[] months = new Object[] {
-                "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
-        };
-        List<Object> columns = Arrays.asList(months);
+        // spark sql syntax
+        // set to a lower no. of partitions (for small datasets) for huge improvement in performance
+        spark.conf().set("spark.sql.shuffle.partitions", "12");
+        dataset.createOrReplaceTempView("logging_view");
+        Dataset<Row> results = spark.sql(
+                "SELECT level, DATE_FORMAT(datetime, 'MMMM') AS month, COUNT(1) AS total " +
+                        "FROM logging_view " +
+                        "GROUP BY level, month " +
+                        "ORDER BY CAST(FIRST(DATE_FORMAT(datetime, 'M')) AS INT), level"
+        );
+        results.show();
 
+        // spark java syntax
         dataset
                 .select(col("level"),
                         date_format(col("datetime"), "MMMM").alias("month"),
                         date_format(col("datetime"), "M").alias("month_num").cast(DataTypes.IntegerType))
-                .groupBy("level")
-                .pivot("month", columns)
-                .count()
+                .groupBy("level", "month", "month_num")
+                .count().as("total")
                 .show();
+
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
 
         spark.close();
     }
