@@ -7,8 +7,9 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.max;
-import static org.apache.spark.sql.functions.min;
+import static org.apache.spark.sql.functions.mean;
+import static org.apache.spark.sql.functions.round;
+import static org.apache.spark.sql.functions.stddev;
 
 public class ExamResults {
 
@@ -39,8 +40,9 @@ public class ExamResults {
 
         dataset
                 .groupBy("subject")
-                .agg(max(col("score")).alias("max_score"),
-                     min(col("score")).alias("min_score"))
+                .pivot("year")
+                .agg(round(mean(col("score")), 2).alias("mean_score"),
+                     round(stddev(col("score")), 2).alias("std_dev"))
                 .show();
 
         spark.close();
